@@ -2,8 +2,8 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <mcp_can.h>
 #include <SPI.h>
+#include "mcp_can.h"
 
 #define FALSE                   0x00
 #define TRUE                    0x01

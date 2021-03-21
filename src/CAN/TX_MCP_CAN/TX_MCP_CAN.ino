@@ -1,7 +1,7 @@
 #include <stdint.h>
-
-#include <mcp_can.h>
 #include <SPI.h>
+
+#include "mcp_can.h"
 
 
 #define FALSE                   0x00
