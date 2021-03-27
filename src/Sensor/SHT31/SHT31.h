@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <math.h>
 
 #include "Arduino.h"
 #include <Wire.h>
@@ -136,20 +137,20 @@ struct sht31_Reg_t
 typedef struct{
 float temp_c;   /* 摂氏（℃） */
 float temp_f;   /* 華氏（℉） */
-float rh; /* 湿度（%） */
+float rh;       /* 湿度（%） */
 } SHT31_DATA_T;
 
-// 温度センサ値➡摂氏変換
-#define SENSROR_2_TEMP_C(temp) \
-    -45.0 + 175.0 * (temp / ((2^16) - 1))
+// 温度センサ値➡摂氏変換(物理値)計算関数マクロ
+#define SENSOR_2_TEMP_C( tmp) \
+    -45.0 + ((175.0 * (float) tmp) / ((float)pow(2,16) - 1.0))
 
-// 温度センサ値➡華氏変換
-#define SENSROR_2_TEMP_F(temp)  \
-    -49.0 + 315.0 * (temp / ((2^16) - 1))
+// 温度センサ値➡華氏変換(物理値)計算関数マクロ
+#define SENSOR_2_TEMP_F( tmp)  \
+    -49.0 + ((315.0 * (float) tmp) / ((float)pow(2,16) - 1.0))
 
-// 温度センサ値➡湿度変換
-#define SENSROR_2_RH(temp)  \
-    100.0 * (temp / ((2^16) - 1))
+// 温度センサ値➡湿度変換(物理値)計算関数マクロ
+#define SENSOR_2_RH( tmp)  \
+    100.0 * ((float) tmp / ((float)pow(2,16) - 1.0))
 
 void SHT31_Reset(uint8_t i2c_addr);
 void SHT31_Read(SHT31_DATA_T *p_sth31_data_t);

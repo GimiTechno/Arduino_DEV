@@ -20,15 +20,20 @@ SHT31_DATA_T g_sth31_data_t;
 void setup()
 {
     Serial.begin(115200);
+    delay(500);
+    Serial.println("--------------------------");
+    Serial.println("SHT31 Sample By GimiTechno");
+    Serial.println("--------------------------");
+
     SHT31_Reset(SHT31_ADDR);
+    delay(300);
 }
 
 void loop()
 {
-  SHT31_Read(&g_sth31_data_t);
+    SHT31_Read(&g_sth31_data_t);
 
     Serial.println("--------------------------");
-
     Serial.print("Temp = ");
     Serial.print(g_sth31_data_t.temp_c);
     Serial.println(" 'C ");
@@ -36,6 +41,7 @@ void loop()
     Serial.print("Humidity = ");
     Serial.print(g_sth31_data_t.rh);
     Serial.println(" % ");
+    Serial.println("--------------------------");
 
-    delay(800);
+    delay(1000);
 }

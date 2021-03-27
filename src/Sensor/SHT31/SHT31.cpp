@@ -174,15 +174,20 @@ static uint16_t ReadStatus(void)
     return tmp;
 }
 
+#define DEBUG
 static void GetTempHum(void)
 {
     uint8_t data[7];
+    uint16_t tmp;
 
     i2c_read(&data[0],6);
 
-    s_temperature_c = -45.0 + (175.0 * ((data[0] * 256.0) + data[1]) / 65535.0);
-    s_temperature_f = -49.0 + (315.0 * ((data[0] * 256.0) + data[1]) / 65535.0);
-    s_humidity = (100.0 * ((data[3] * 256.0) + data[4])) / 65535.0;
+    tmp = (data[0] * 256.0) + data[1];
+    s_temperature_c = SENSOR_2_TEMP_C(tmp); /* 摂氏（℃） */
+    s_temperature_f = SENSOR_2_TEMP_F(tmp); /* 華氏（℉） */
+
+    tmp = (data[3] * 256.0) + data[4];
+    s_humidity = SENSOR_2_RH(tmp);          /* 湿度（%） */
 }
 
 void SHT31_Reset(uint8_t i2c_addr)
@@ -200,16 +205,16 @@ void SHT31_Reset(uint8_t i2c_addr)
     i2c_write(SHT31_I2C_CMD_CLEAR_STATUS);
 
     // 測定モード設定
-    Set_Measurement_Mode(PERIODIC_READ_1MPS_HIGH);
+    Set_Measurement_Mode(PERIODIC_READ_10MPS_HIGH);
 }
 
 void SHT31_Read(SHT31_DATA_T *p_sth31_data_t)
 {
     GetTempHum();
 
-    p_sth31_data_t->temp_c = s_temperature_c;
-    p_sth31_data_t->temp_f = s_temperature_f;
-    p_sth31_data_t->rh   = s_humidity;
+    p_sth31_data_t->temp_c = s_temperature_c;   /* 摂氏（℃） */
+    p_sth31_data_t->temp_f = s_temperature_f;   /* 華氏（℉） */
+    p_sth31_data_t->rh   = s_humidity;          /* 湿度（%） */
 }
 
 void SHT31_StatusCheck(void)
@@ -218,6 +223,30 @@ void SHT31_StatusCheck(void)
     union status_reg_bit;
 
     sht31_status_reg.STATUS_REG.WORD = (uint16_t)ReadStatus();
+
+    // (DEBUG)
+#if 0
+    Serial.print("Status Reg = 0x");
+    Serial.print(sht31_status_reg.STATUS_REG.WORD);
+    Serial.print("(0b");
+    Serial.print(sht31_status_reg.STATUS_REG.BIT.bit15);
+    Serial.print(sht31_status_reg.STATUS_REG.BIT.bit14);
+    Serial.print(sht31_status_reg.STATUS_REG.BIT.bit13);
+    Serial.print(sht31_status_reg.STATUS_REG.BIT.bit12);
+    Serial.print(sht31_status_reg.STATUS_REG.BIT.bit11);
+    Serial.print(sht31_status_reg.STATUS_REG.BIT.bit10);
+    Serial.print(sht31_status_reg.STATUS_REG.BIT.bit9);
+    Serial.print(sht31_status_reg.STATUS_REG.BIT.bit8);
+    Serial.print(sht31_status_reg.STATUS_REG.BIT.bit7);
+    Serial.print(sht31_status_reg.STATUS_REG.BIT.bit6);
+    Serial.print(sht31_status_reg.STATUS_REG.BIT.bit5);
+    Serial.print(sht31_status_reg.STATUS_REG.BIT.bit4);
+    Serial.print(sht31_status_reg.STATUS_REG.BIT.bit3);
+    Serial.print(sht31_status_reg.STATUS_REG.BIT.bit2);
+    Serial.print(sht31_status_reg.STATUS_REG.BIT.bit1);
+    Serial.print(sht31_status_reg.STATUS_REG.BIT.bit0);
+    Serial.println(")");
+#endif
 
     /*************************************************************/
     /***********************************/
