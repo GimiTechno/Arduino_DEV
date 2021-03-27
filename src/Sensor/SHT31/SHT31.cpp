@@ -4,13 +4,17 @@ static void BussReset(void);
 static void SoftReset(void);
 static void Heater(uint8_t onoff);
 static void GetTempHum(void);
+static void Set_Measurement_Mode(uint8_t mode);
 static uint16_t ReadStatus(void);
 
 static void i2c_write(uint16_t data);
 static void i2c_read(uint8_t *p_buf,uint8_t len);
 
 static uint8_t s_i2c_addr;
-static float s_humidity, s_temperature;
+
+static float s_temperature_c; /* 摂氏（℃） */
+static float s_temperature_f; /* 華氏（℉） */
+static float s_humidity;      /* 湿度（%） */
 
 /*************************************************************/
 /***********************************/
@@ -46,6 +50,7 @@ static void i2c_read(uint8_t *p_buf,uint8_t len)
 
     Wire.requestFrom(s_i2c_addr,(uint8_t)len);
 
+
     while(Wire.available() != len);
 
     for(cnt = 0; cnt < len; cnt++)
@@ -64,8 +69,11 @@ static void SoftReset(void)
 {
     i2c_write(SHT31_I2C_CMD_SOFTRESET);
     delay(500);
+
+#if 0
     i2c_write(SHT31_I2C_CMD_SOFTRESET_2);
     delay(500);
+#endif
 }
 
 static void Heater(uint8_t onoff)
@@ -77,6 +85,81 @@ static void Heater(uint8_t onoff)
         }
 
     delay(500);
+}
+
+static void Set_Measurement_Mode(uint8_t mode)
+{
+    switch (mode)
+    {
+        /* ワンショットリード */
+        case ONESHOT_READ_DATA_HIGH:         /* 繰り返し精度：高 */
+            i2c_write(SHT31_I2C_CMD_ONESHOT_READ_DATA_HIGH);
+            break;
+        case ONESHOT_READ_DATA_MIDDLE:       /* 繰り返し精度：中 */
+            i2c_write(SHT31_I2C_CMD_ONESHOT_READ_DATA_MIDDLE);
+            break;
+        case ONESHOT_READ_DATA_LOW:          /* 繰り返し精度：低 */
+            i2c_write(SHT31_I2C_CMD_ONESHOT_READ_DATA_LOW);
+            break;
+
+        /* 周期読み出し：0.5mps(0.5回/sec) */
+        case PERIODIC_READ_0P5MPS_HIGH:      /* 繰り返し精度：高 */
+            i2c_write(SHT31_I2C_CMD_PERIODIC_READ_DATA_0P5MPS_HIGH);
+            break;
+        case PERIODIC_READ_0P5MPS_MIDDLE:    /* 繰り返し精度：中 */
+            i2c_write(SHT31_I2C_CMD_PERIODIC_READ_DATA_0P5MPS_MIDDLE);
+            break;
+        case PERIODIC_READ_0P5MPS_LOW:       /* 繰り返し精度：低 */
+            i2c_write(SHT31_I2C_CMD_PERIODIC_READ_DATA_0P5MPS_LOW);
+            break;
+
+        /* 周期読み出し：1mps(1回/sec) */
+        case PERIODIC_READ_1MPS_HIGH:        /* 繰り返し精度：高 */
+            i2c_write(SHT31_I2C_CMD_PERIODIC_READ_DATA_1MPS_HIGH);
+            break;
+        case PERIODIC_READ_1MPS_MIDDLE:      /* 繰り返し精度：中 */
+            i2c_write(SHT31_I2C_CMD_PERIODIC_READ_DATA_1MPS_MIDDLE);
+            break;
+        case PERIODIC_READ_1MPS_LOW:         /* 繰り返し精度：低 */
+            i2c_write(SHT31_I2C_CMD_PERIODIC_READ_DATA_1MPS_LOW);
+            break;
+
+        /* 周期読み出し：2mps(2回/sec) */
+        case PERIODIC_READ_2MPS_HIGH:        /* 繰り返し精度：高 */
+            i2c_write(SHT31_I2C_CMD_PERIODIC_READ_DATA_2MPS_HIGH);
+            break;
+        case PERIODIC_READ_2MPS_MIDDLE:       /* 繰り返し精度：中 */
+            i2c_write(SHT31_I2C_CMD_PERIODIC_READ_DATA_2MPS_MIDDLE);
+            break;
+        case PERIODIC_READ_2MPS_LOW:          /* 繰り返し精度：低 */
+            i2c_write(SHT31_I2C_CMD_PERIODIC_READ_DATA_2MPS_LOW);
+            break;
+
+        /* 周期読み出し：4mps(4回/sec) */
+        case PERIODIC_READ_4MPS_HIGH:        /* 繰り返し精度：高 */
+            i2c_write(SHT31_I2C_CMD_PERIODIC_READ_DATA_4MPS_HIGH);
+            break;
+        case PERIODIC_READ_4MPS_MIDDLE:      /* 繰り返し精度：中 */
+            i2c_write(SHT31_I2C_CMD_PERIODIC_READ_DATA_4MPS_MIDDLE);
+            break;
+        case PERIODIC_READ_4MPS_LOW:         /* 繰り返し精度：低 */
+            i2c_write(SHT31_I2C_CMD_PERIODIC_READ_DATA_4MPS_LOW);
+            break;
+
+        /* 周期読み出し：10mps(10回/sec) */
+        case PERIODIC_READ_10MPS_HIGH:       /* 繰り返し精度：高 */
+            i2c_write(SHT31_I2C_CMD_PERIODIC_READ_DATA_10MPS_HIGH);
+            break;
+        case PERIODIC_READ_10MPS_MIDDLE:     /* 繰り返し精度：中 */
+            i2c_write(SHT31_I2C_CMD_PERIODIC_READ_DATA_10MPS_MIDDLE);
+            break;
+        case PERIODIC_READ_10MPS_LOW:         /* 繰り返し精度：低 */
+            i2c_write(SHT31_I2C_CMD_PERIODIC_READ_DATA_10MPS_LOW);
+            break;
+
+        default:
+            break;
+    }
 }
 
 static uint16_t ReadStatus(void)
@@ -95,12 +178,10 @@ static void GetTempHum(void)
 {
     uint8_t data[7];
 
-    i2c_write(SHT31_I2C_CMD_READ_DATA);
-    delay(300);
-
     i2c_read(&data[0],6);
 
-    s_temperature = -45.0 + (175.0 * ((data[0] * 256.0) + data[1]) / 65535.0);
+    s_temperature_c = -45.0 + (175.0 * ((data[0] * 256.0) + data[1]) / 65535.0);
+    s_temperature_f = -49.0 + (315.0 * ((data[0] * 256.0) + data[1]) / 65535.0);
     s_humidity = (100.0 * ((data[3] * 256.0) + data[4])) / 65535.0;
 }
 
@@ -109,15 +190,25 @@ void SHT31_Reset(uint8_t i2c_addr)
     s_i2c_addr = i2c_addr;
     Wire.begin();
 
+    // S/Wリセット
     SoftReset();
+
+    // 内蔵ヒータ無効
     Heater(OFF);
+
+    // ステータスレジスタクリア
+    i2c_write(SHT31_I2C_CMD_CLEAR_STATUS);
+
+    // 測定モード設定
+    Set_Measurement_Mode(PERIODIC_READ_1MPS_HIGH);
 }
 
 void SHT31_Read(SHT31_DATA_T *p_sth31_data_t)
 {
     GetTempHum();
 
-    p_sth31_data_t->temp = s_temperature;
+    p_sth31_data_t->temp_c = s_temperature_c;
+    p_sth31_data_t->temp_f = s_temperature_f;
     p_sth31_data_t->rh   = s_humidity;
 }
 

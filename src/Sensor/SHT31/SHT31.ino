@@ -30,7 +30,7 @@ void loop()
     Serial.println("--------------------------");
 
     Serial.print("Temp = ");
-    Serial.print(g_sth31_data_t.temp);
+    Serial.print(g_sth31_data_t.temp_c);
     Serial.println(" 'C ");
 
     Serial.print("Humidity = ");
