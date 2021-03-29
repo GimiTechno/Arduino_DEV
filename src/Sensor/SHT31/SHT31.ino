@@ -14,16 +14,25 @@
 #define SHT31_ADDR  0x44
 #endif
 
+static void op_msg(void);
+
 // SHT31 Data Struct
 SHT31_DATA_T g_sth31_data_t;
+
+
+static void op_msg(void)
+{
+    Serial.println("--------------------------");
+    Serial.println("SHT31 Sample By GimiTechno");
+    Serial.println("--------------------------");
+}
 
 void setup()
 {
     Serial.begin(115200);
     delay(500);
-    Serial.println("--------------------------");
-    Serial.println("SHT31 Sample By GimiTechno");
-    Serial.println("--------------------------");
+
+    op_msg();
 
     SHT31_Reset(SHT31_ADDR);
     delay(300);
@@ -31,6 +40,8 @@ void setup()
 
 void loop()
 {
+    op_msg();
+
     SHT31_Read(&g_sth31_data_t);
 
     Serial.println("--------------------------");
